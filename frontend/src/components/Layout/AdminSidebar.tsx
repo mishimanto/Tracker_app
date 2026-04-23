@@ -1,0 +1,147 @@
+import React, { Fragment } from 'react';
+import { NavLink } from 'react-router-dom';
+import { Dialog, Transition } from '@headlessui/react';
+import {
+  XMarkIcon,
+  HomeIcon,
+  ClipboardDocumentListIcon,
+  CurrencyDollarIcon,
+  ChartBarIcon,
+  UserCircleIcon,
+  DocumentTextIcon,
+  Cog6ToothIcon,
+  ChatBubbleLeftRightIcon,
+  QueueListIcon,
+} from '@heroicons/react/24/outline';
+import { useQuery } from '@tanstack/react-query';
+import { siteSettingsService } from '../../services/siteSettingsService';
+import { resolveBrandingAssetUrl } from '../../utils/branding';
+
+interface AdminSidebarProps {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+}
+
+const adminNavigation = [
+  { name: 'Dashboard', href: '/admin', icon: HomeIcon },
+  { name: 'Users', href: '/admin/users', icon: UserCircleIcon },
+  { name: 'Tasks', href: '/admin/tasks', icon: ClipboardDocumentListIcon },
+  { name: 'Expenses', href: '/admin/expenses', icon: CurrencyDollarIcon },
+  { name: 'Reports', href: '/admin/reports', icon: ChartBarIcon },
+  { name: 'Activity Logs', href: '/admin/activity-logs', icon: QueueListIcon },
+  { name: 'Notes', href: '/admin/notes', icon: DocumentTextIcon },
+  { name: 'Settings', href: '/admin/settings', icon: Cog6ToothIcon },
+  { name: 'Feedback', href: '/admin/feedback', icon: ChatBubbleLeftRightIcon },
+];
+
+export const AdminSidebar: React.FC<AdminSidebarProps> = ({ open, setOpen }) => {
+  const { data: settings } = useQuery({
+    queryKey: ['site-settings'],
+    queryFn: siteSettingsService.getPublicSettings,
+    staleTime: 1000 * 60 * 5,
+  });
+  const brandName = settings?.site_name?.trim() || 'Task & Expense';
+  const logoUrl = resolveBrandingAssetUrl(settings?.logo_url || settings?.logo_path);
+
+  const NavContent = () => (
+    <div className="flex grow flex-col overflow-y-auto bg-gradient-to-b from-slate-950 via-slate-900 to-slate-800 px-6 pb-4 pt-4 md:py-0">
+      <div className="hidden h-16 shrink-0 items-center lg:flex px-4">
+        <div className="flex items-center gap-3">
+          {logoUrl ? (
+            <img src={logoUrl} alt={brandName} className="h-11 w-11 p-1" />
+          ) : (
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-sm font-bold text-white">
+              {brandName.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div className="min-w-0">            
+            <h1 className="mt-1 truncate text-xl font-bold text-white">{brandName}</h1>
+          </div>
+        </div>
+      </div>
+
+      <nav className="mt-4 flex flex-1 flex-col">
+        <ul role="list" className="space-y-1">
+          {adminNavigation.map((item) => (
+            <li key={item.name}>
+              <NavLink
+                to={item.href}
+                end={item.href === '/admin'}
+                className={({ isActive }) =>
+                  `group flex items-center gap-x-3 rounded-md px-3 py-3 text-sm font-semibold transition ${
+                    isActive
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                  }`
+                }
+              >
+                <item.icon className="h-5 w-5 shrink-0" />
+                {item.name}
+              </NavLink>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </div>
+  );
+
+  return (
+    <>
+      <Transition.Root show={open} as={Fragment}>
+        <Dialog as="div" className="relative z-50 lg:hidden" onClose={setOpen}>
+          <Transition.Child
+            as={Fragment}
+            enter="transition-opacity ease-linear duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="transition-opacity ease-linear duration-300"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-slate-950/80" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 flex">
+            <Transition.Child
+              as={Fragment}
+              enter="transition ease-in-out duration-300 transform"
+              enterFrom="-translate-x-full"
+              enterTo="translate-x-0"
+              leave="transition ease-in-out duration-300 transform"
+              leaveFrom="translate-x-0"
+              leaveTo="-translate-x-full"
+            >
+              <Dialog.Panel className="relative mr-16 flex w-full max-w-xs flex-1">
+                <Transition.Child
+                  as={Fragment}
+                  enter="ease-in-out duration-300"
+                  enterFrom="opacity-0"
+                  enterTo="opacity-100"
+                  leave="ease-in-out duration-300"
+                  leaveFrom="opacity-100"
+                  leaveTo="opacity-0"
+                >
+                  <div className="absolute left-full top-0 flex w-16 justify-center pt-5">
+                    <button
+                      type="button"
+                      className="-m-2.5 p-2.5"
+                      onClick={() => setOpen(false)}
+                    >
+                      <span className="sr-only">Close sidebar</span>
+                      <XMarkIcon className="h-6 w-6 text-white" />
+                    </button>
+                  </div>
+                </Transition.Child>
+                <NavContent />
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </Dialog>
+      </Transition.Root>
+
+      <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
+        <NavContent />
+      </div>
+    </>
+  );
+};

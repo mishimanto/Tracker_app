@@ -3,14 +3,13 @@ import { useQuery } from '@tanstack/react-query';
 import { AdminLayout } from '../../components/Layout/AdminLayout';
 import { UserDetailModal } from '../../components/Admin/UserDetailModal';
 import { adminService } from '../../services/adminService';
-import { PageLoaderTransition } from '../../components/UI/PageLoader';
 
 export const Users: React.FC = () => {
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
-  const { data: users, isLoading } = useQuery({
+  const { data: users = [] } = useQuery({
     queryKey: ['admin-users'],
-    queryFn: adminService.getUsers,
+    queryFn: () => adminService.getUsers(),
   });
 
   return (

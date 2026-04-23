@@ -1,5 +1,5 @@
 import { apiService } from './api';
-import { User, Task, Note, Expense, SiteSetting, ExpenseCategory, FeedbackMessage } from '../types';
+import { User, Task, Note, Expense, SiteSetting, ExpenseCategory, FeedbackMessage, CalendarDay } from '../types';
 
 interface PaginatedResponse<T> {
   data: T[];
@@ -104,9 +104,24 @@ const extractTopUsers = (
 };
 
 class AdminService {
-  async getUsers() {
+  async getUsers(params?: { search?: string; role?: string; perPage?: number }) {
     try {
-      const response = await apiService.get<LaravelApiResponse<User[]>>('/admin/users');
+      const query = new URLSearchParams();
+
+      if (params?.search) {
+        query.set('search', params.search);
+      }
+
+      if (params?.role) {
+        query.set('role', params.role);
+      }
+
+      if (params?.perPage) {
+        query.set('per_page', String(params.perPage));
+      }
+
+      const suffix = query.toString() ? `?${query.toString()}` : '';
+      const response = await apiService.get<LaravelApiResponse<User[]>>(`/admin/users${suffix}`);
       console.log('getUsers response:', response);
       
       return extractCollection(response?.data);
@@ -311,6 +326,18 @@ class AdminService {
       return extractCollection(response?.data);
     } catch (error) {
       console.error('Failed to fetch activity logs:', error);
+      return [];
+    }
+  }
+
+  async getCalendarMonth(userId: number, month: string): Promise<CalendarDay[]> {
+    try {
+      const response = await apiService.get<LaravelApiResponse<CalendarDay[]>>(
+        `/admin/calendar?user_id=${userId}&month=${month}`
+      );
+      return response?.data ?? [];
+    } catch (error) {
+      console.error('Failed to fetch admin calendar data:', error);
       return [];
     }
   }

@@ -4,6 +4,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import {
   XMarkIcon,
   HomeIcon,
+  CalendarDaysIcon,
   ClipboardDocumentListIcon,
   CurrencyDollarIcon,
   ChartBarIcon,
@@ -25,6 +26,7 @@ interface AdminSidebarProps {
 const adminNavigation = [
   { name: 'Dashboard', href: '/admin', icon: HomeIcon },
   { name: 'Users', href: '/admin/users', icon: UserCircleIcon },
+  { name: 'Calendar', href: '/admin/calendar', icon: CalendarDaysIcon },
   { name: 'Tasks', href: '/admin/tasks', icon: ClipboardDocumentListIcon },
   { name: 'Expenses', href: '/admin/expenses', icon: CurrencyDollarIcon },
   { name: 'Reports', href: '/admin/reports', icon: ChartBarIcon },

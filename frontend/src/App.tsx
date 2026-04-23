@@ -38,6 +38,7 @@ import { AdminNotes } from './pages/admin/Notes';
 import { AdminSettings } from './pages/admin/Settings';
 import { Feedback } from './pages/admin/Feedback';
 import { FeedbackDetail } from './pages/admin/FeedbackDetail';
+import { AdminCalendarPage } from './pages/admin/CalendarPage';
 
 const queryClient = new QueryClient();
 
@@ -272,6 +273,11 @@ function App() {
             <Route path="/admin/users" element={
               <ProtectedRoute adminOnly>
                 <Users />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/calendar" element={
+              <ProtectedRoute adminOnly>
+                <AdminCalendarPage />
               </ProtectedRoute>
             } />
             <Route path="/admin/tasks" element={

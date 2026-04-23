@@ -48,11 +48,11 @@ export const SearchPage: React.FC = () => {
   return (
     <UserLayout>
       <div className="space-y-6">
-        <section className="border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-          <h1 className="text-2xl font-semibold text-slate-900">Global Search</h1>
-          <p className="mt-1 text-sm text-slate-500">Find expenses by amount/category and tasks by priority or text.</p>
+        <section className="border border-slate-200 bg-white p-2 shadow-sm sm:p-4">
+          {/* <h1 className="text-2xl font-semibold text-slate-900">Global Search</h1>
+          <p className="mt-1 text-sm text-slate-500">Find expenses by amount/category and tasks by priority or text.</p> */}
 
-          <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}

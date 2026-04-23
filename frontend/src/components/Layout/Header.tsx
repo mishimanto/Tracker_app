@@ -177,7 +177,7 @@ export const Header: React.FC<HeaderProps> = ({ setSidebarOpen, variant = 'user'
 
           <button
             type="button"
-            onClick={() => navigate('/calendar')}
+            onClick={() => navigate(variant === 'admin' ? '/admin/calendar' : '/calendar')}
             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-sky-300 hover:text-sky-700"
             title="Calendar view"
           >

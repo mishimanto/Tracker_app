@@ -117,6 +117,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/all-notes', [AdminController::class, 'allNotes']);
         Route::delete('/notes/{id}', [AdminController::class, 'destroyNote']);
         Route::get('/activity-logs', [AdminController::class, 'activityLogs']);
+        Route::get('/calendar', [AdminController::class, 'calendar']);
         Route::get('/feedback-messages', [FeedbackMessageController::class, 'index']);
         Route::get('/feedback-messages/{id}', [FeedbackMessageController::class, 'show']);
         Route::post('/feedback-messages/{id}/reply', [FeedbackMessageController::class, 'reply']);

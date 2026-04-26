@@ -197,6 +197,7 @@ function App() {
         <BrandingInitializer>
           <SeoInitializer />
           <AppInitializer>
+
             <Suspense fallback={<RouteFallback />}>
               <Routes>
                 <Route
@@ -431,6 +432,7 @@ function App() {
                 />
               </Routes>
             </Suspense>
+
           </AppInitializer>
         </BrandingInitializer>
       </Router>

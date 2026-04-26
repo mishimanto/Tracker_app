@@ -16,4 +16,4 @@ Disallow: /messages
 Disallow: /profile
 Disallow: /change-password
 
-Sitemap: https://api.mytracker.shimzo.online/sitemap.xml
+Sitemap: http://tracker.test/sitemap.xml

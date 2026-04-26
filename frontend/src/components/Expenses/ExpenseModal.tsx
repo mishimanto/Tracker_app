@@ -66,10 +66,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ isOpen, expense, onC
 
   // Construct full image URL
   const imageUrl = expense.receipt_image
-    ? `https://api.mytracker.shimzo.online/storage/${expense.receipt_image}`
+    ? `http://tracker.test/storage/${expense.receipt_image}`
     : null;
   const attachmentUrl = expense.attachment_path
-    ? `https://api.mytracker.shimzo.online/storage/${expense.attachment_path}`
+    ? `http://tracker.test/storage/${expense.attachment_path}`
     : null;
 
   return (

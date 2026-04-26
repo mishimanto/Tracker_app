@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const rootDir = process.cwd();
 const publicDir = path.join(rootDir, 'public');
-const siteUrl = (process.env.SITE_URL || process.env.VITE_SITE_URL || 'https://api.mytracker.shimzo.online').replace(/\/$/, '');
+const siteUrl = (process.env.SITE_URL || process.env.VITE_SITE_URL || 'http://tracker.test').replace(/\/$/, '');
 const today = new Date().toISOString().split('T')[0];
 
 const publicRoutes = [

@@ -4,7 +4,7 @@ import path from 'node:path';
 const rootDir = process.cwd();
 const distDir = path.join(rootDir, 'dist');
 const indexPath = path.join(distDir, 'index.html');
-const siteUrl = (process.env.SITE_URL || process.env.VITE_SITE_URL || 'https://api.mytracker.shimzo.online').replace(/\/$/, '');
+const siteUrl = (process.env.SITE_URL || process.env.VITE_SITE_URL || 'http://tracker.test').replace(/\/$/, '');
 
 const routes = [
   {

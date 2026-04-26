@@ -1,6 +1,6 @@
 import { SiteSetting } from '../types';
 
-const backendBaseUrl = (import.meta.env.VITE_API_URL || 'https://api.mytracker.shimzo.online/api').replace(/\/api$/, '');
+const backendBaseUrl = (import.meta.env.VITE_API_URL || 'http://tracker.test/api').replace(/\/api$/, '');
 
 export const resolveBrandingAssetUrl = (path?: string | null): string | null => {
   if (!path) {

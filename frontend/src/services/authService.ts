@@ -1,8 +1,8 @@
 // frontend/src/services/authService.ts
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://tracker.test/api';
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://tracker.test';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.mytracker.shimzo.online/api';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.mytracker.shimzo.online';
 
 const api = axios.create({
   baseURL: API_URL,

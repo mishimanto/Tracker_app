@@ -16,8 +16,13 @@ class ReportController extends Controller
 {
     public function userReport(Request $request)
     {
-        $period = $request->get('period', 'monthly');
-        $format = $request->get('format', 'pdf');
+        $validated = $request->validate([
+            'period' => ['nullable', 'in:daily,weekly,monthly,yearly'],
+            'format' => ['nullable', 'in:pdf,csv,excel'],
+        ]);
+
+        $period = $validated['period'] ?? 'monthly';
+        $format = $validated['format'] ?? 'pdf';
 
         if (in_array($format, ['csv', 'excel'], true)) {
             return $this->exportUserReport($request->user(), $period, $format);
@@ -28,7 +33,11 @@ class ReportController extends Controller
 
     public function adminUserReport(Request $request, int $id)
     {
-        $period = $request->get('period', 'monthly');
+        $validated = $request->validate([
+            'period' => ['nullable', 'in:daily,weekly,monthly,yearly'],
+        ]);
+
+        $period = $validated['period'] ?? 'monthly';
         $user = User::findOrFail($id);
 
         return $this->downloadUserReport($user, $period);
@@ -36,8 +45,13 @@ class ReportController extends Controller
 
     public function adminReport(Request $request)
     {
-        $period = $request->get('period', 'monthly');
-        $format = $request->get('format', 'pdf');
+        $validated = $request->validate([
+            'period' => ['nullable', 'in:daily,weekly,monthly,yearly'],
+            'format' => ['nullable', 'in:pdf,csv,excel'],
+        ]);
+
+        $period = $validated['period'] ?? 'monthly';
+        $format = $validated['format'] ?? 'pdf';
 
         if (in_array($format, ['csv', 'excel'], true)) {
             return $this->exportAdminReport($period, $format);

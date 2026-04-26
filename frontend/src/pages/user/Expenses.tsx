@@ -236,13 +236,14 @@ export const Expenses: React.FC = () => {
           </div>
 
           <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
-            {(stats?.by_category || []).map((item) => {
+            {(stats?.by_category || []).map((item, index) => {
               const budget = budgets.find((entry) => entry.category_id === item.category_id);
               const draftValue = budgetDrafts[item.category_id] ?? String(budget?.limit_amount || '');
               const usage = budget?.usage_percentage ?? 0;
+              const categoryKey = item.category_id ?? item.category?.id ?? `category-${index}`;
 
               return (
-                <div key={item.category_id} className="border border-slate-200 p-4">
+                <div key={categoryKey} className="border border-slate-200 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex w-full items-center justify-between">
                       <p className="font-semibold text-slate-900">

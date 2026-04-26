@@ -12,12 +12,16 @@ class NotificationController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        $validated = $request->validate([
+            'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+
         $user = $request->user();
         $this->sendPendingTaskReminders($user);
 
         return response()->json([
             'success' => true,
-            'data' => $user->notifications()->latest()->limit(20)->get(),
+            'data' => $user->notifications()->latest()->limit($validated['limit'] ?? 20)->get(),
         ]);
     }
 

@@ -7,17 +7,34 @@ use App\Models\Expense;
 use App\Models\User;
 use App\Notifications\BudgetExceededNotification;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class BudgetService
 {
     public function getUserBudgets(int $userId): Collection
     {
-        return Budget::query()
+        $cacheKey = sprintf('user:%d:budgets:v%d', $userId, $this->getBudgetCacheVersion($userId));
+
+        $cached = Cache::get($cacheKey);
+
+        if ($cached instanceof Collection) {
+            return $cached;
+        }
+
+        if ($cached !== null) {
+            Cache::forget($cacheKey);
+        }
+
+        $budgets = Budget::query()
             ->with('category')
             ->where('user_id', $userId)
             ->orderByDesc('updated_at')
             ->get()
             ->map(fn (Budget $budget) => $this->appendProgress($budget));
+
+        Cache::put($cacheKey, $budgets, now()->addMinutes(5));
+
+        return $budgets;
     }
 
     public function upsertUserBudgets(int $userId, array $budgets): Collection
@@ -35,15 +52,23 @@ class BudgetService
             );
         }
 
+        $this->clearBudgetCache($userId);
+
         return $this->getUserBudgets($userId);
     }
 
     public function deleteBudget(int $userId, int $budgetId): bool
     {
-        return (bool) Budget::query()
+        $deleted = (bool) Budget::query()
             ->where('user_id', $userId)
             ->whereKey($budgetId)
             ->delete();
+
+        if ($deleted) {
+            $this->clearBudgetCache($userId);
+        }
+
+        return $deleted;
     }
 
     public function evaluateExpenseImpact(int $userId, ?int $categoryId): ?array
@@ -101,5 +126,22 @@ class BudgetService
         $budget->setAttribute('is_exceeded', $limit > 0 && $spent > $limit);
 
         return $budget;
+    }
+
+    protected function clearBudgetCache(int $userId): void
+    {
+        Cache::increment($this->budgetVersionKey($userId));
+        Cache::increment("user:{$userId}:expenses:version");
+        Cache::increment("user:{$userId}:dashboard:version");
+    }
+
+    protected function getBudgetCacheVersion(int $userId): int
+    {
+        return (int) Cache::rememberForever($this->budgetVersionKey($userId), fn () => 1);
+    }
+
+    protected function budgetVersionKey(int $userId): string
+    {
+        return "user:{$userId}:budget:version";
     }
 }

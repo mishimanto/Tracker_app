@@ -32,6 +32,16 @@ class Task extends Model
         'reminder_sent_at' => 'datetime',
     ];
 
+    public function toArray(): array
+    {
+        $attributes = parent::toArray();
+
+        $attributes['due_date'] = $this->due_date?->format('Y-m-d');
+        $attributes['due_time'] = $this->getRawOriginal('due_time');
+
+        return $attributes;
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -59,7 +69,17 @@ class Task extends Model
 
     public function scopeOverdue($query)
     {
-        return $query->whereDate('due_date', '<', today())
-                    ->where('status', '!=', 'completed');
+        return $query
+            ->where('status', '!=', 'completed')
+            ->where(function ($builder) {
+                $builder
+                    ->whereDate('due_date', '<', today())
+                    ->orWhere(function ($todayBuilder) {
+                        $todayBuilder
+                            ->whereDate('due_date', today())
+                            ->whereNotNull('due_time')
+                            ->whereTime('due_time', '<', now()->format('H:i:s'));
+                    });
+            });
     }
 }

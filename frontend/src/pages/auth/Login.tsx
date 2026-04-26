@@ -6,9 +6,13 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { authService } from '../../services/authService';
 import { useAuthStore } from '../../store/authStore';
-import { Input } from '../../components/UI/Input';
-import { Button } from '../../components/UI/Button';
 import { Alert } from '../../components/UI/Alert';
+import {
+  AuthPrimaryButton,
+  AuthShell,
+  FloatingInput,
+  PasswordField,
+} from '../../components/Auth/AuthShell';
 
 const schema = yup.object({
   email: yup.string().email('Invalid email').required('Email is required'),
@@ -58,7 +62,7 @@ export const Login: React.FC = () => {
       if (userData && token) {
         // Use setAuth to set both user and token
         setAuth(userData, token);
-        navigate('/dashboard');
+        navigate(userData.role === 'admin' ? '/admin' : '/dashboard');
       } else {
         setError('Invalid response from server');
       }
@@ -81,83 +85,71 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-          Sign in to your account
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Or{' '}
-          <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
-            create a new account
+    <AuthShell
+      title="Welcome Back"
+      subtitle={
+        <>
+          Don't have an account?
+          {' '}
+          <Link to="/register" className="font-semibold text-sky-300 transition hover:text-sky-200">
+            Create
           </Link>
-        </p>
-      </div>
+        </>
+      }
+      footer={
+        <>
+          Need help accessing your account?
+          {' '}
+          <Link to="/forgot-password" className="font-semibold text-sky-300 transition hover:text-sky-200">
+            Reset password
+          </Link>
+        </>
+      }
+    >
+      {error ? <Alert variant="error" message={error} /> : null}
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          {error && (
-            <Alert variant="error" message={error} />
-          )}
-          
-          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-            <Input
-              label="Email address"
-              type="email"
-              autoComplete="email"
-              error={errors.email?.message}
-              {...register('email')}
-            />
+      <form className="mt-6 space-y-7" onSubmit={handleSubmit(onSubmit)}>
+        <FloatingInput
+          label="Email Address"
+          type="email"
+          autoComplete="email"
+          icon="email"
+          error={errors.email?.message}
+          {...register('email')}
+        />
 
-            <Input
-              label="Password"
-              type="password"
-              autoComplete="current-password"
-              error={errors.password?.message}
-              {...register('password')}
-            />
+        <PasswordField
+          label="Password"
+          autoComplete="current-password"
+          error={errors.password?.message}
+          {...register('password')}
+        />
 
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              isLoading={isLoading}
-              className="w-full"
-            >
-              Sign in
-            </Button>
-          </form>
+        {/* <div className="flex items-center justify-between text-xs">
+          <button
+            type="button"
+            onClick={() => fillDemoCredentials('user')}
+            className="rounded-full border border-white/15 px-3 py-1.5 text-slate-200 transition hover:border-sky-300/40 hover:bg-white/10"
+          >
+            Use demo user
+          </button>
+          <button
+            type="button"
+            onClick={() => fillDemoCredentials('admin')}
+            className="rounded-full border border-white/15 px-3 py-1.5 text-slate-200 transition hover:border-sky-300/40 hover:bg-white/10"
+          >
+            Use demo admin
+          </button>
+        </div> */}
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-2 text-gray-500">Demo Credentials</span>
-              </div>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => fillDemoCredentials('admin')}
-                className="px-3 py-2 text-sm bg-gray-50 rounded hover:bg-gray-100 border border-gray-200"
-              >
-                <div className="font-medium">Admin</div>
-                <div className="text-xs text-gray-500">admin@gmail.com</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => fillDemoCredentials('user')}
-                className="px-3 py-2 text-sm bg-gray-50 rounded hover:bg-gray-100 border border-gray-200"
-              >
-                <div className="font-medium">User</div>
-                <div className="text-xs text-gray-500">user@gmail.com</div>
-              </button>
-            </div>
-          </div>
+        <div className="flex items-center justify-end">
+          <Link to="/forgot-password" className="text-xs text-slate-300 transition hover:text-white">
+            Forgot password?
+          </Link>
         </div>
-      </div>
-    </div>
+
+        <AuthPrimaryButton loading={isLoading}>Sign In</AuthPrimaryButton>
+      </form>
+    </AuthShell>
   );
 };

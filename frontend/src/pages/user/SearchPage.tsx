@@ -36,6 +36,16 @@ export const SearchPage: React.FC = () => {
     setPriority(params.get('priority') || '');
   }, [params]);
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+
+    return new Date(dateString).toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  };
+
   const applySearch = () => {
     const next = new URLSearchParams(params);
     query ? next.set('query', query) : next.delete('query');
@@ -64,7 +74,7 @@ export const SearchPage: React.FC = () => {
               onChange={(event) => setCategoryId(event.target.value)}
               className="h-11 border border-slate-200 px-4"
             >
-              <option value="">All categories</option>
+              <option value="">Exepense categories</option>
               {categories.map((category) => (
                 <option key={category.id} value={category.id}>
                   {category.name}
@@ -76,7 +86,7 @@ export const SearchPage: React.FC = () => {
               onChange={(event) => setPriority(event.target.value)}
               className="h-11 border border-slate-200 px-4"
             >
-              <option value="">All priorities</option>
+              <option value="">Task priorities</option>
               <option value="low">Low</option>
               <option value="medium">Medium</option>
               <option value="high">High</option>
@@ -101,7 +111,9 @@ export const SearchPage: React.FC = () => {
                     <p className="font-medium text-slate-900">{expense.description}</p>
                     <span className="text-sm font-semibold text-emerald-600">BDT {Number(expense.amount).toFixed(2)}</span>
                   </div>
-                  <p className="mt-1 text-sm text-slate-500">{expense.category?.name || 'Uncategorized'} • {expense.expense_date}</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {expense.category?.name || 'Uncategorized'} • Date: <span className='font-semibold'>{formatDate(expense.expense_date)}</span>
+                  </p>
                 </div>
               ))}
               {results.expenses.length === 0 && <p className="text-sm text-slate-400">No expenses matched.</p>}
@@ -117,7 +129,9 @@ export const SearchPage: React.FC = () => {
                     <p className="font-medium text-slate-900">{task.title}</p>
                     <span className="text-xs font-semibold uppercase text-sky-600">{task.priority}</span>
                   </div>
-                  <p className="mt-1 text-sm text-slate-500">{task.status} • Due {task.due_date}</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                  {task.status} • Due: <span className='font-semibold'>{formatDate(task.due_date)}</span>
+                </p>
                 </div>
               ))}
               {results.tasks.length === 0 && <p className="text-sm text-slate-400">No tasks matched.</p>}

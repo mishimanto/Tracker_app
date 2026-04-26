@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /login
+Allow: /register
+Disallow: /forgot-password
+Disallow: /password-reset
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /tasks
+Disallow: /expenses
+Disallow: /expenses-all
+Disallow: /reports
+Disallow: /calendar
+Disallow: /search
+Disallow: /notepad
+Disallow: /messages
+Disallow: /profile
+Disallow: /change-password
+
+Sitemap: https://api.mytracker.shimzo.online/sitemap.xml

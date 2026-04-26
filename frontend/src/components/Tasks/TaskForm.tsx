@@ -202,7 +202,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
           )}
         </div>
 
-        <div className="rounded-xl border border-slate-200 p-4">
+        <div className="border border-slate-200 p-4">
           <label className="flex items-center gap-3 text-sm font-medium text-slate-700">
             <input type="checkbox" {...register('isRecurring')} />
             Make this task recurring

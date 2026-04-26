@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:5173', 'http://tracker.test', 'https://tracker-git-main-moynul-islam-shimantos-projects.vercel.app'],
+    'allowed_origins' => ['http://localhost:5173', 'https://api.mytracker.shimzo.online', 'https://api.mytracker.shimzo.online'],
 
     'allowed_origins_patterns' => [],
 

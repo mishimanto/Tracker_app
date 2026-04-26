@@ -27,6 +27,72 @@ class ExpenseService {
     };
   }
 
+  private normalizeDailyBreakdown(value: any): Array<{ date: string; total: number }> {
+    if (Array.isArray(value)) {
+      return value.map((item) => ({
+        date: item?.date || '',
+        total: this.parseNumber(item?.total),
+      }));
+    }
+
+    if (value && typeof value === 'object') {
+      return Object.entries(value).map(([date, total]) => {
+        if (total && typeof total === 'object') {
+          return {
+            date: (total as any).date || date,
+            total: this.parseNumber((total as any).total),
+          };
+        }
+
+        return {
+          date,
+          total: this.parseNumber(total),
+        };
+      });
+    }
+
+    return [];
+  }
+
+  private normalizeMonthlyBreakdown(value: any): Array<{ month: number; total: number }> {
+    if (Array.isArray(value)) {
+      return value.map((item) => ({
+        month: Number(item?.month) || 0,
+        total: this.parseNumber(item?.total),
+      }));
+    }
+
+    if (value && typeof value === 'object') {
+      return Object.entries(value).map(([month, total]) => {
+        if (total && typeof total === 'object') {
+          return {
+            month: Number((total as any).month) || Number(month) || 0,
+            total: this.parseNumber((total as any).total),
+          };
+        }
+
+        return {
+          month: Number(month) || 0,
+          total: this.parseNumber(total),
+        };
+      });
+    }
+
+    return [];
+  }
+
+  private normalizeCollection<T>(value: any): T[] {
+    if (Array.isArray(value)) {
+      return value;
+    }
+
+    if (value && typeof value === 'object') {
+      return Object.values(value) as T[];
+    }
+
+    return [];
+  }
+
   async getExpenses(filters: ExpenseFilters = {}): Promise<Expense[]> {
     try {
       const params = new URLSearchParams();
@@ -130,12 +196,12 @@ class ExpenseService {
       if (response?.data) {
         return {
           total: this.parseNumber(response.data.total),
-          by_category: response.data.by_category || [],
-          by_payment_method: response.data.by_payment_method || [],
+          by_category: this.normalizeCollection(response.data.by_category),
+          by_payment_method: this.normalizeCollection(response.data.by_payment_method),
           daily_average: this.parseNumber(response.data.daily_average),
-          daily_breakdown: response.data.daily_breakdown || [],
-          monthly_breakdown: response.data.monthly_breakdown || [],
-          budgets: (response.data.budgets || []) as Budget[],
+          daily_breakdown: this.normalizeDailyBreakdown(response.data.daily_breakdown),
+          monthly_breakdown: this.normalizeMonthlyBreakdown(response.data.monthly_breakdown),
+          budgets: this.normalizeCollection<Budget>(response.data.budgets),
         };
       }
       

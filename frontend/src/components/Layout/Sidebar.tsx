@@ -28,10 +28,10 @@ const userNavigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
   { name: 'Tasks', href: '/tasks', icon: ClipboardDocumentListIcon },
   { name: 'Expenses', href: '/expenses', icon: CurrencyDollarIcon },
+  { name: 'Notepad', href: '/notepad', icon: DocumentTextIcon },
   { name: 'Calendar', href: '/calendar', icon: CalendarIcon },
   { name: 'Search', href: '/search', icon: MagnifyingGlassIcon },
-  { name: 'Reports', href: '/reports', icon: ChartBarIcon },
-  { name: 'Notepad', href: '/notepad', icon: DocumentTextIcon },
+  { name: 'Reports', href: '/reports', icon: ChartBarIcon },  
   // { name: 'Profile', href: '/profile', icon: UserCircleIcon },
   { name: 'Messages', href: '/messages', icon: ChatBubbleLeftRightIcon },
 ];
@@ -41,10 +41,11 @@ const adminNavigation = [
   { name: 'Users', href: '/admin/users', icon: UserCircleIcon },
   { name: 'Tasks', href: '/admin/tasks', icon: ClipboardDocumentListIcon },
   { name: 'Expenses', href: '/admin/expenses', icon: CurrencyDollarIcon },
-  { name: 'Reports', href: '/admin/reports', icon: ChartBarIcon },
   { name: 'Notes', href: '/admin/notes', icon: DocumentTextIcon },
-  { name: 'Settings', href: '/admin/settings', icon: Cog6ToothIcon },
+  { name: 'Reports', href: '/admin/reports', icon: ChartBarIcon },  
+  
   { name: 'Feedback', href: '/admin/feedback', icon: ChatBubbleLeftRightIcon },
+  { name: 'Settings', href: '/admin/settings', icon: Cog6ToothIcon },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {

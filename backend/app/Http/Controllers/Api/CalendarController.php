@@ -17,8 +17,12 @@ class CalendarController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        $validated = $request->validate([
+            'month' => ['nullable', 'date_format:Y-m'],
+        ]);
+
         $user = $request->user();
-        $month = $request->string('month', now()->format('Y-m'))->toString();
+        $month = $validated['month'] ?? now()->format('Y-m');
         [$year, $monthNumber] = array_pad(explode('-', $month), 2, now()->format('m'));
         $start = now()->setDate((int) $year, (int) $monthNumber, 1)->startOfMonth();
         $end = $start->copy()->endOfMonth();

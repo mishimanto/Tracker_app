@@ -28,7 +28,11 @@ class DashboardController extends Controller
 
     public function recentActivities(Request $request): JsonResponse
     {
-        $limit = $request->get('limit', 10);
+        $validated = $request->validate([
+            'limit' => ['nullable', 'integer', 'min:1', 'max:50'],
+        ]);
+
+        $limit = $validated['limit'] ?? 10;
         $activities = $this->dashboardService->getRecentActivities(auth()->id(), $limit);
 
         return response()->json([

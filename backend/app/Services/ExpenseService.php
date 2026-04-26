@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Expense;
 use App\Repositories\ExpenseRepository;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Redis;
 
@@ -34,7 +35,15 @@ class ExpenseService
     public function getUserExpenses($userId, $filters = [])
     {
         $this->recurringExpenseService->generateDueExpensesForUser($userId);
-        return $this->expenseRepository->getUserExpenses($userId, $filters);
+
+        $cacheKey = sprintf(
+            'user:%d:expenses:v%d:%s',
+            $userId,
+            $this->getExpenseCacheVersion($userId),
+            md5(json_encode($filters))
+        );
+
+        return Cache::remember($cacheKey, now()->addMinutes(5), fn () => $this->expenseRepository->getUserExpenses($userId, $filters));
     }
 
     public function createExpense($userId, array $data)
@@ -119,48 +128,66 @@ class ExpenseService
     public function getExpenseStats($userId, $period = 'monthly')
     {
         $this->recurringExpenseService->generateDueExpensesForUser($userId);
-        $baseQuery = Expense::where('user_id', $userId);
+        $cacheKey = sprintf('user:%d:expense-stats:v%d:%s', $userId, $this->getExpenseCacheVersion($userId), $period);
 
-        switch ($period) {
-            case 'daily':
-                $baseQuery->whereDate('expense_date', today());
-                break;
-            case 'weekly':
-                $baseQuery->whereBetween('expense_date', [now()->startOfWeek(), now()->endOfWeek()]);
-                break;
-            case 'monthly':
-                $baseQuery->whereMonth('expense_date', now()->month)
-                    ->whereYear('expense_date', now()->year);
-                break;
-            case 'yearly':
-                $baseQuery->whereYear('expense_date', now()->year);
-                break;
+        $cached = Cache::get($cacheKey);
+
+        if (is_array($cached)) {
+            return $cached;
         }
 
-        $total = (clone $baseQuery)->sum('amount');
-
-        $stats = [
-            'total' => $total,
-            'by_category' => (clone $baseQuery)
-                ->selectRaw('category_id, SUM(amount) as total')
-                ->with('category')
-                ->groupBy('category_id')
-                ->get(),
-            'by_payment_method' => (clone $baseQuery)
-                ->selectRaw('payment_method, SUM(amount) as total')
-                ->groupBy('payment_method')
-                ->get(),
-            'daily_average' => $period === 'monthly' ? $total / now()->daysInMonth : 0,
-            'budgets' => $this->budgetService->getUserBudgets($userId),
-        ];
-
-        if ($period === 'monthly') {
-            $stats['daily_breakdown'] = $this->getDailyBreakdown($userId);
+        if ($cached !== null) {
+            Cache::forget($cacheKey);
         }
 
-        if ($period === 'yearly') {
-            $stats['monthly_breakdown'] = $this->getMonthlyBreakdown($userId);
-        }
+        $stats = (function () use ($userId, $period) {
+            $baseQuery = Expense::where('user_id', $userId);
+
+            switch ($period) {
+                case 'daily':
+                    $baseQuery->whereDate('expense_date', today());
+                    break;
+                case 'weekly':
+                    $baseQuery->whereBetween('expense_date', [now()->startOfWeek(), now()->endOfWeek()]);
+                    break;
+                case 'monthly':
+                    $baseQuery->whereMonth('expense_date', now()->month)
+                        ->whereYear('expense_date', now()->year);
+                    break;
+                case 'yearly':
+                    $baseQuery->whereYear('expense_date', now()->year);
+                    break;
+            }
+
+            $total = (clone $baseQuery)->sum('amount');
+
+            $stats = [
+                'total' => $total,
+                'by_category' => (clone $baseQuery)
+                    ->selectRaw('category_id, SUM(amount) as total')
+                    ->with('category')
+                    ->groupBy('category_id')
+                    ->get(),
+                'by_payment_method' => (clone $baseQuery)
+                    ->selectRaw('payment_method, SUM(amount) as total')
+                    ->groupBy('payment_method')
+                    ->get(),
+                'daily_average' => $period === 'monthly' ? $total / now()->daysInMonth : 0,
+                'budgets' => $this->budgetService->getUserBudgets($userId),
+            ];
+
+            if ($period === 'monthly') {
+                $stats['daily_breakdown'] = $this->getDailyBreakdown($userId);
+            }
+
+            if ($period === 'yearly') {
+                $stats['monthly_breakdown'] = $this->getMonthlyBreakdown($userId);
+            }
+
+            return $stats;
+        })();
+
+        Cache::put($cacheKey, $stats, now()->addMinutes(5));
 
         return $stats;
     }
@@ -188,7 +215,9 @@ class ExpenseService
 
     protected function clearUserExpenseCache($userId)
     {
-        return;
+        Cache::increment($this->expenseVersionKey($userId));
+        Cache::increment("user:{$userId}:budget:version");
+        Cache::increment("user:{$userId}:dashboard:version");
     }
 
     public function storeExpenseAttachment(UploadedFile $file): array
@@ -200,5 +229,15 @@ class ExpenseService
             'attachment_name' => $file->getClientOriginalName(),
             'attachment_mime_type' => $file->getClientMimeType(),
         ];
+    }
+
+    protected function getExpenseCacheVersion(int $userId): int
+    {
+        return (int) Cache::rememberForever($this->expenseVersionKey($userId), fn () => 1);
+    }
+
+    protected function expenseVersionKey(int $userId): string
+    {
+        return "user:{$userId}:expenses:version";
     }
 }

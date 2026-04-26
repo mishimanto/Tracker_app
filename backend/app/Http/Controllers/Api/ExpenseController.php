@@ -51,8 +51,8 @@ class ExpenseController extends Controller
             'receipt_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
             'attachment' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,pdf|max:8192',
             'is_recurring' => 'nullable|boolean',
-            'recurrence_frequency' => 'nullable|in:weekly,monthly',
-            'recurrence_interval' => 'nullable|integer|min:1|max:12',
+            'recurrence_frequency' => 'required_if:is_recurring,true|nullable|in:weekly,monthly',
+            'recurrence_interval' => 'required_if:is_recurring,true|nullable|integer|min:1|max:12',
             'recurrence_end_date' => 'nullable|date|after_or_equal:expense_date',
         ]);
 
@@ -64,7 +64,7 @@ class ExpenseController extends Controller
             ], 422);
         }
 
-        $data = $request->all();
+        $data = $validator->validated();
 
         if ($request->hasFile('receipt_image')) {
             $data['receipt_image'] = $this->imageUploadService->storeOptimizedImage(
@@ -158,7 +158,7 @@ class ExpenseController extends Controller
             ], 422);
         }
 
-        $data = $request->all();
+        $data = $validator->validated();
         $expense = $this->expenseService->findUserExpense($id, auth()->id());
 
         if ($request->hasFile('receipt_image')) {

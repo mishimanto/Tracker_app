@@ -16,7 +16,28 @@ class TaskRepository
         }
 
         if (isset($filters['status'])) {
-            $query->where('status', $filters['status']);
+            if ($filters['status'] === 'overdue') {
+                $query->overdue();
+            } else {
+                $query->where('status', $filters['status']);
+
+                if (in_array($filters['status'], ['pending', 'in_progress'], true)) {
+                    $query->where(function ($statusQuery) {
+                        $statusQuery
+                            ->whereDate('due_date', '>', today())
+                            ->orWhereNull('due_date')
+                            ->orWhere(function ($todayQuery) {
+                                $todayQuery
+                                    ->whereDate('due_date', today())
+                                    ->where(function ($timeQuery) {
+                                        $timeQuery
+                                            ->whereNull('due_time')
+                                            ->orWhereTime('due_time', '>=', now()->format('H:i:s'));
+                                    });
+                            });
+                    });
+                }
+            }
         }
 
         if (isset($filters['priority'])) {

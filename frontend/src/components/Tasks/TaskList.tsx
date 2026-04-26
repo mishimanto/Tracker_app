@@ -18,6 +18,7 @@ import { TaskForm } from './TaskForm';
 import { StatsCard } from '../Dashboard/StatsCard';
 import { PageLoader } from '../UI/PageLoader';
 import { Button } from '../UI/Button';
+import { isTaskOverdue } from '../../utils/taskDeadline';
 
 export const TaskList: React.FC = () => {
   const [filters, setFilters] = useState<TaskQueryFilters>({});
@@ -53,6 +54,9 @@ export const TaskList: React.FC = () => {
   });
 
   const tasks = Array.isArray(tasksData) ? tasksData : [];
+  const overdueTasks = tasks.filter(isTaskOverdue);
+  const regularTasks = tasks.filter((task) => !isTaskOverdue(task));
+  const showSeparatedOverdueSection = !filters.status;
 
   const deleteMutation = useMutation({
     mutationFn: taskService.deleteTask,
@@ -192,7 +196,7 @@ export const TaskList: React.FC = () => {
       </section>
 
       {tasks.length === 0 ? (
-        <div className="rounded-[30px] border border-slate-200 bg-white px-6 py-12 text-center shadow-sm">
+        <div className="border border-slate-200 bg-white px-6 py-12 text-center shadow-sm">
           <div className="mx-auto max-w-md">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-100">
               <HiOutlineClipboardDocumentList className="h-8 w-8 text-slate-400" />
@@ -205,24 +209,90 @@ export const TaskList: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div
-          className={
-            resolvedViewMode === 'grid'
-              ? 'grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3'
-              : 'space-y-4'
-          }
-        >
-          {tasks.map((task, index) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onToggleStatus={handleToggleStatus}
-              viewMode={resolvedViewMode}
-              itemNumber={index + 1}
-            />
-          ))}
+        <div className="space-y-6">
+          {regularTasks.length > 0 && (
+            <section className="space-y-4">
+              {showSeparatedOverdueSection && overdueTasks.length > 0 && (
+                <div className="border border-slate-200 bg-white px-4 py-3">
+                  <h3 className="text-lg font-semibold text-slate-900">
+                    Active Tasks ({regularTasks.length})
+                  </h3>
+                </div>
+              )}
+              <div
+                className={
+                  resolvedViewMode === 'grid'
+                    ? 'grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3'
+                    : 'space-y-4'
+                }
+              >
+                {regularTasks.map((task, index) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onToggleStatus={handleToggleStatus}
+                    viewMode={resolvedViewMode}
+                    itemNumber={showSeparatedOverdueSection ? overdueTasks.length + index + 1 : index + 1}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {showSeparatedOverdueSection && overdueTasks.length > 0 && (
+            <section className="space-y-4">
+              <div className="border border-rose-200 bg-gray-50 px-4 py-3">
+                <h3 className="text-lg font-semibold text-rose-700">
+                  Overdue Tasks ({overdueTasks.length})
+                </h3>
+              </div>
+              <div
+                className={
+                  resolvedViewMode === 'grid'
+                    ? 'grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3'
+                    : 'space-y-4'
+                }
+              >
+                {overdueTasks.map((task, index) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onToggleStatus={handleToggleStatus}
+                    viewMode={resolvedViewMode}
+                    itemNumber={index + 1}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          
+
+          {!showSeparatedOverdueSection && overdueTasks.length > 0 && (
+            <div
+              className={
+                resolvedViewMode === 'grid'
+                  ? 'grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3'
+                  : 'space-y-4'
+              }
+            >
+              {overdueTasks.map((task, index) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onToggleStatus={handleToggleStatus}
+                  viewMode={resolvedViewMode}
+                  itemNumber={index + 1}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 

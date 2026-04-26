@@ -36,7 +36,7 @@ class TaskController extends Controller
             'priority' => 'required|in:low,medium,high',
             'due_date' => 'required|date',
             'due_time' => 'nullable|date_format:H:i',
-            'is_recurring' => 'boolean',
+            'is_recurring' => 'nullable|boolean',
             'recurrence_pattern' => 'nullable|in:daily,weekly,monthly'
         ]);
 
@@ -47,7 +47,7 @@ class TaskController extends Controller
             ], 422);
         }
 
-        $task = $this->taskService->createTask(auth()->id(), $request->all());
+        $task = $this->taskService->createTask(auth()->id(), $validator->validated());
 
         return response()->json([
             'success' => true,
@@ -93,7 +93,7 @@ class TaskController extends Controller
             ], 422);
         }
 
-        $task = $this->taskService->updateTask($id, auth()->id(), $request->all());
+        $task = $this->taskService->updateTask($id, auth()->id(), $validator->validated());
 
         if (!$task) {
             return response()->json([

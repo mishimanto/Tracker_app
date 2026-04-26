@@ -1,6 +1,6 @@
 import { SiteSetting } from '../types';
 
-const backendBaseUrl = (import.meta.env.VITE_API_URL || 'http://tracker.test/api').replace(/\/api$/, '');
+const backendBaseUrl = (import.meta.env.VITE_API_URL || 'https://api.mytracker.shimzo.online/api').replace(/\/api$/, '');
 
 export const resolveBrandingAssetUrl = (path?: string | null): string | null => {
   if (!path) {
@@ -20,7 +20,7 @@ export const resolveBrandingAssetUrl = (path?: string | null): string | null => 
 
 export const applyBrandingToDocument = (settings: SiteSetting | null) => {
   const siteName = settings?.site_name?.trim() || 'Task & Expense';
-  document.title = siteName;
+  document.documentElement.dataset.siteName = siteName;
 
   const faviconHref = resolveBrandingAssetUrl(settings?.favicon_url || settings?.favicon_path);
 

@@ -17,8 +17,18 @@ class SearchController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        $validated = $request->validate([
+            'query' => ['nullable', 'string', 'max:255'],
+            'category_id' => ['nullable', 'integer', 'exists:expense_categories,id'],
+            'amount_min' => ['nullable', 'numeric', 'min:0'],
+            'amount_max' => ['nullable', 'numeric', 'gte:amount_min'],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+            'priority' => ['nullable', 'in:low,medium,high'],
+        ]);
+
         $user = $request->user();
-        $query = trim((string) $request->input('query', ''));
+        $query = trim((string) ($validated['query'] ?? ''));
 
         $this->recurringExpenseService->generateDueExpensesForUser($user->id);
 
@@ -32,11 +42,11 @@ class SearchController extends Controller
                         ->orWhere('notes', 'like', "%{$query}%");
                 });
             })
-            ->when($request->filled('category_id'), fn ($builder) => $builder->where('category_id', $request->integer('category_id')))
-            ->when($request->filled('amount_min'), fn ($builder) => $builder->where('amount', '>=', $request->input('amount_min')))
-            ->when($request->filled('amount_max'), fn ($builder) => $builder->where('amount', '<=', $request->input('amount_max')))
-            ->when($request->filled('date_from'), fn ($builder) => $builder->whereDate('expense_date', '>=', $request->date('date_from')))
-            ->when($request->filled('date_to'), fn ($builder) => $builder->whereDate('expense_date', '<=', $request->date('date_to')))
+            ->when(array_key_exists('category_id', $validated), fn ($builder) => $builder->where('category_id', $validated['category_id']))
+            ->when(array_key_exists('amount_min', $validated), fn ($builder) => $builder->where('amount', '>=', $validated['amount_min']))
+            ->when(array_key_exists('amount_max', $validated), fn ($builder) => $builder->where('amount', '<=', $validated['amount_max']))
+            ->when(array_key_exists('date_from', $validated), fn ($builder) => $builder->whereDate('expense_date', '>=', $validated['date_from']))
+            ->when(array_key_exists('date_to', $validated), fn ($builder) => $builder->whereDate('expense_date', '<=', $validated['date_to']))
             ->latest('expense_date')
             ->limit(30)
             ->get();
@@ -50,9 +60,9 @@ class SearchController extends Controller
                         ->orWhere('description', 'like', "%{$query}%");
                 });
             })
-            ->when($request->filled('priority'), fn ($builder) => $builder->where('priority', $request->string('priority')))
-            ->when($request->filled('date_from'), fn ($builder) => $builder->whereDate('due_date', '>=', $request->date('date_from')))
-            ->when($request->filled('date_to'), fn ($builder) => $builder->whereDate('due_date', '<=', $request->date('date_to')))
+            ->when(array_key_exists('priority', $validated), fn ($builder) => $builder->where('priority', $validated['priority']))
+            ->when(array_key_exists('date_from', $validated), fn ($builder) => $builder->whereDate('due_date', '>=', $validated['date_from']))
+            ->when(array_key_exists('date_to', $validated), fn ($builder) => $builder->whereDate('due_date', '<=', $validated['date_to']))
             ->latest('due_date')
             ->limit(30)
             ->get();

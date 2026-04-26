@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { Suspense, lazy, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
@@ -13,10 +13,21 @@ import { UserLayout } from '../../components/Layout/UserLayout';
 import { StatsCard } from '../../components/Dashboard/StatsCard';
 import { dashboardService } from '../../services/dashboardService';
 import { expenseService } from '../../services/expenseService';
-import { ExpenseChart } from '../../components/Expenses/ExpenseChart';
 import { siteSettingsService } from '../../services/siteSettingsService';
+import { PageLoader } from '../../components/UI/PageLoader';
 
 type PeriodType = 'daily' | 'weekly' | 'monthly' | 'yearly';
+
+const ExpenseChart = lazy(async () => {
+  const module = await import('../../components/Expenses/ExpenseChart');
+  return { default: module.ExpenseChart };
+});
+
+const ChartFallback: React.FC = () => (
+  <div className="flex min-h-64 items-center justify-center border border-dashed border-slate-200 bg-slate-50/80">
+    <PageLoader message="Loading chart..." />
+  </div>
+);
 
 export const Reports: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('daily');
@@ -194,7 +205,9 @@ export const Reports: React.FC = () => {
                   ))}
                 </div>
               </div>
-              <ExpenseChart data={chartData} type="bar" />
+              <Suspense fallback={<ChartFallback />}>
+                <ExpenseChart data={chartData} type="bar" />
+              </Suspense>
             </section>
 
             {/* Category Breakdown */}
@@ -204,8 +217,9 @@ export const Reports: React.FC = () => {
                 <div className="space-y-3">
                   {expenseStats.by_category.slice(0, 5).map((item, index) => {
                     const percentage = ((item.total / (expenseStats.total || 1)) * 100).toFixed(1);
+                    const categoryKey = item.category_id ?? item.category?.id ?? `report-category-${index}`;
                     return (
-                      <div key={index} className="group rounded-lg border border-slate-200 p-4 transition-all duration-300 hover:shadow-md hover:border-slate-300">
+                      <div key={categoryKey} className="group rounded-lg border border-slate-200 p-4 transition-all duration-300 hover:shadow-md hover:border-slate-300">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-3">
                             <div className="h-3 w-3 rounded-full bg-gradient-to-r from-green-500 to-green-700"></div>

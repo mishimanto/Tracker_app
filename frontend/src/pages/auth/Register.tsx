@@ -6,9 +6,13 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { authService } from '../../services/authService';
 import { useAuthStore } from '../../store/authStore';
-import { Input } from '../../components/UI/Input';
-import { Button } from '../../components/UI/Button';
 import { Alert } from '../../components/UI/Alert';
+import {
+  AuthPrimaryButton,
+  AuthShell,
+  FloatingInput,
+  PasswordField,
+} from '../../components/Auth/AuthShell';
 
 const schema = yup.object({
   name: yup.string().required('Name is required').min(2, 'Name must be at least 2 characters'),
@@ -57,7 +61,7 @@ export const Register: React.FC = () => {
       
       if (userData && token) {
         setAuth(userData, token);
-        navigate('/dashboard');
+        navigate(userData.role === 'admin' ? '/admin' : '/dashboard');
       } else {
         setError('Invalid response from server');
       }
@@ -70,70 +74,60 @@ export const Register: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-          Create your account
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Or{' '}
-          <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
-            sign in to existing account
+    <AuthShell
+      title="Create Account"
+      subtitle={
+        <>
+        Already have an account?
+          {' '}
+          <Link to="/login" className="font-semibold text-sky-300 transition hover:text-sky-200">
+            Sign In
           </Link>
-        </p>
-      </div>
+        </>
+      }
+      footer={
+        <>
+          By continuing, you agree to use the workspace responsibly and keep your credentials secure.
+        </>
+      }
+    >
+      {error ? <Alert variant="error" message={error} /> : null}
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          {error && (
-            <Alert variant="error" message={error} />
-          )}
-          
-          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-            <Input
-              label="Full Name"
-              type="text"
-              autoComplete="name"
-              error={errors.name?.message}
-              {...register('name')}
-            />
+      <form className="mt-6 space-y-7" onSubmit={handleSubmit(onSubmit)}>
+        <FloatingInput
+          label="Full Name"
+          type="text"
+          autoComplete="name"
+          icon="user"
+          error={errors.name?.message}
+          {...register('name')}
+        />
 
-            <Input
-              label="Email address"
-              type="email"
-              autoComplete="email"
-              error={errors.email?.message}
-              {...register('email')}
-            />
+        <FloatingInput
+          label="Email Address"
+          type="email"
+          autoComplete="email"
+          icon="email"
+          error={errors.email?.message}
+          {...register('email')}
+        />
 
-            <Input
-              label="Password"
-              type="password"
-              autoComplete="new-password"
-              error={errors.password?.message}
-              {...register('password')}
-            />
+        <PasswordField
+          label="Password"
+          autoComplete="new-password"
+          error={errors.password?.message}
+          {...register('password')}
+        />
 
-            <Input
-              label="Confirm Password"
-              type="password"
-              autoComplete="new-password"
-              error={errors.password_confirmation?.message}
-              {...register('password_confirmation')}
-            />
+        <PasswordField
+          label="Confirm Password"
+          autoComplete="new-password"
+          error={errors.password_confirmation?.message}
+          {...register('password_confirmation')}
+        />
 
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              isLoading={isLoading}
-              className="w-full"
-            >
-              Register
-            </Button>
-          </form>
-        </div>
-      </div>
-    </div>
+        <AuthPrimaryButton loading={isLoading}>Create Account</AuthPrimaryButton>
+      </form>
+    </AuthShell>
   );
 };

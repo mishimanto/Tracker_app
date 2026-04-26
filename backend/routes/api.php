@@ -23,14 +23,15 @@ use Illuminate\Support\Facades\Route;
 
 // Breeze Authentication Routes (API)
 Route::post('/register', [RegisteredUserController::class, 'store'])
+    ->middleware(['guest', 'throttle:auth'])
     ->name('register');
 
 Route::post('/login', [AuthenticatedSessionController::class, 'store'])
-    ->middleware('guest')
+    ->middleware(['guest', 'throttle:auth'])
     ->name('login');
 
 Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
-    ->middleware('guest')
+    ->middleware(['guest', 'throttle:auth'])
     ->name('password.email');
 
 Route::post('/reset-password', [NewPasswordController::class, 'store'])
@@ -54,10 +55,11 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::get('/site-settings', [AdminController::class, 'publicSettings']);
+Route::get('/site-settings', [AdminController::class, 'publicSettings'])->middleware('throttle:public-seo');
+Route::get('/public-stats', [AdminController::class, 'publicStats'])->middleware('throttle:public-seo');
 
 // Protected routes (Breeze automatically handles auth)
-Route::middleware(['auth:sanctum'])->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
     // Profile routes
     Route::get('/profile', [ProfileController::class, 'getProfile']);
@@ -82,14 +84,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('notes', NoteController::class);
 
     // Feedback
-    Route::post('/feedback-messages', [FeedbackMessageController::class, 'store']);
+    Route::post('/feedback-messages', [FeedbackMessageController::class, 'store'])->middleware('throttle:feedback');
 
     // Budgets and recurring tools
     Route::get('/budgets', [BudgetController::class, 'index']);
     Route::post('/budgets', [BudgetController::class, 'store']);
     Route::delete('/budgets/{id}', [BudgetController::class, 'destroy']);
     Route::get('/calendar', [CalendarController::class, 'index']);
-    Route::get('/search', [SearchController::class, 'index']);
+    Route::get('/search', [SearchController::class, 'index'])->middleware('throttle:search');
 
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index']);
@@ -97,10 +99,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead']);
 
     // Reports
-    Route::get('/reports/export', [ReportController::class, 'userReport']);
+    Route::get('/reports/export', [ReportController::class, 'userReport'])->middleware('throttle:reports');
 
     // Admin routes
-    Route::middleware(['admin'])->prefix('admin')->group(function () {
+    Route::middleware(['admin', 'throttle:admin-api'])->prefix('admin')->group(function () {
         Route::get('/overview', [AdminController::class, 'overview']);
         Route::get('/users', [AdminController::class, 'users']);
         Route::get('/users/{id}', [AdminController::class, 'userDetails']);
@@ -120,11 +122,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/calendar', [AdminController::class, 'calendar']);
         Route::get('/feedback-messages', [FeedbackMessageController::class, 'index']);
         Route::get('/feedback-messages/{id}', [FeedbackMessageController::class, 'show']);
-        Route::post('/feedback-messages/{id}/reply', [FeedbackMessageController::class, 'reply']);
+        Route::post('/feedback-messages/{id}/reply', [FeedbackMessageController::class, 'reply'])->middleware('throttle:feedback');
         Route::get('/system-stats', [AdminController::class, 'systemStats']);
         Route::get('/reports', [AdminController::class, 'reports']);
-        Route::get('/reports/export', [ReportController::class, 'adminReport']);
-        Route::get('/users/{id}/report/export', [ReportController::class, 'adminUserReport']);
+        Route::get('/reports/export', [ReportController::class, 'adminReport'])->middleware('throttle:reports');
+        Route::get('/users/{id}/report/export', [ReportController::class, 'adminUserReport'])->middleware('throttle:reports');
         Route::get('/settings', [AdminController::class, 'settings']);
         Route::put('/settings', [AdminController::class, 'updateSettings']);
         Route::post('/settings', [AdminController::class, 'updateSettings']);

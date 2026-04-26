@@ -6,6 +6,7 @@ use App\Models\Task;
 use App\Models\User;
 use App\Notifications\TaskDeadlineReminderNotification;
 use App\Repositories\TaskRepository;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redis;
 
 class TaskService
@@ -19,7 +20,27 @@ class TaskService
 
     public function getUserTasks($userId, $filters = [])
     {
-        return $this->taskRepository->getUserTasks($userId, $filters);
+        $cacheKey = sprintf(
+            'user:%d:tasks:v%d:%s',
+            $userId,
+            $this->getTaskCacheVersion($userId),
+            md5(json_encode($filters))
+        );
+
+        $cached = Cache::get($cacheKey);
+
+        if ($cached instanceof \Illuminate\Database\Eloquent\Collection) {
+            return $cached;
+        }
+
+        if ($cached !== null) {
+            Cache::forget($cacheKey);
+        }
+
+        $tasks = $this->taskRepository->getUserTasks($userId, $filters);
+        Cache::put($cacheKey, $tasks, now()->addMinutes(5));
+
+        return $tasks;
     }
 
     public function createTask($userId, array $data)
@@ -75,18 +96,59 @@ class TaskService
 
     public function getTaskStats($userId)
     {
-        return [
+        $cacheKey = sprintf('user:%d:task-stats:v%d', $userId, $this->getTaskCacheVersion($userId));
+
+        $cached = Cache::get($cacheKey);
+
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        if ($cached !== null) {
+            Cache::forget($cacheKey);
+        }
+
+        $stats = [
             'total' => Task::where('user_id', $userId)->count(),
             'completed' => Task::where('user_id', $userId)->completed()->count(),
-            'pending' => Task::where('user_id', $userId)->pending()->count(),
+            'pending' => Task::where('user_id', $userId)
+                ->whereIn('status', ['pending', 'in_progress'])
+                ->where(function ($query) {
+                    $query
+                        ->whereDate('due_date', '>', today())
+                        ->orWhereNull('due_date')
+                        ->orWhere(function ($todayQuery) {
+                            $todayQuery
+                                ->whereDate('due_date', today())
+                                ->where(function ($timeQuery) {
+                                    $timeQuery
+                                        ->whereNull('due_time')
+                                        ->orWhereTime('due_time', '>=', now()->format('H:i:s'));
+                                });
+                        });
+                })
+                ->count(),
             'overdue' => Task::where('user_id', $userId)->overdue()->count(),
-            'today' => Task::where('user_id', $userId)->today()->count(),
+            'today' => Task::where('user_id', $userId)
+                ->today()
+                ->whereIn('status', ['pending', 'in_progress'])
+                ->where(function ($query) {
+                    $query
+                        ->whereNull('due_time')
+                        ->orWhereTime('due_time', '>=', now()->format('H:i:s'));
+                })
+                ->count(),
         ];
+
+        Cache::put($cacheKey, $stats, now()->addMinutes(5));
+
+        return $stats;
     }
 
     protected function clearUserTaskCache($userId)
     {
-        return;
+        Cache::increment($this->taskVersionKey($userId));
+        Cache::increment("user:{$userId}:dashboard:version");
     }
 
     protected function notifyIfDeadlineNear(Task $task): void
@@ -106,5 +168,15 @@ class TaskService
 
         $user->notify(new TaskDeadlineReminderNotification($task));
         $task->forceFill(['reminder_sent_at' => now()])->save();
+    }
+
+    protected function getTaskCacheVersion(int $userId): int
+    {
+        return (int) Cache::rememberForever($this->taskVersionKey($userId), fn () => 1);
+    }
+
+    protected function taskVersionKey(int $userId): string
+    {
+        return "user:{$userId}:tasks:version";
     }
 }

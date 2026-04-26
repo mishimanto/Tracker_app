@@ -19,6 +19,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 
 class AdminController extends Controller
 {
@@ -42,21 +43,30 @@ class AdminController extends Controller
 
     public function users(Request $request): JsonResponse
     {
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'role' => ['nullable', 'in:user'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+
         $query = User::query();
 
-        if ($request->has('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('email', 'like', '%' . $request->search . '%');
+        if (!empty($validated['search'])) {
+            $query->where(function ($builder) use ($validated) {
+                $builder
+                    ->where('name', 'like', '%' . $validated['search'] . '%')
+                    ->orWhere('email', 'like', '%' . $validated['search'] . '%');
+            });
         }
 
-        if ($request->has('role')) {
-            $query->where('role', $request->role);
+        if (!empty($validated['role'])) {
+            $query->where('role', $validated['role']);
         }
 
         $users = $query
             ->where('role', 'user')
             ->latest()
-            ->paginate($request->integer('per_page', 20));
+            ->paginate($validated['per_page'] ?? 20);
 
         return response()->json([
             'success' => true,
@@ -137,17 +147,23 @@ class AdminController extends Controller
 
     public function allTasks(Request $request): JsonResponse
     {
+        $validated = $request->validate([
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'status' => ['nullable', 'in:pending,in_progress,completed'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+
         $query = Task::with('user');
 
-        if ($request->has('user_id')) {
-            $query->where('user_id', $request->user_id);
+        if (array_key_exists('user_id', $validated)) {
+            $query->where('user_id', $validated['user_id']);
         }
 
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
+        if (array_key_exists('status', $validated)) {
+            $query->where('status', $validated['status']);
         }
 
-        $tasks = $query->latest()->paginate($request->get('per_page', 20));
+        $tasks = $query->latest()->paginate($validated['per_page'] ?? 20);
 
         return response()->json([
             'success' => true,
@@ -208,13 +224,18 @@ class AdminController extends Controller
 
     public function allExpenses(Request $request): JsonResponse
     {
+        $validated = $request->validate([
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+
         $query = Expense::with(['user', 'category']);
 
-        if ($request->has('user_id')) {
-            $query->where('user_id', $request->user_id);
+        if (array_key_exists('user_id', $validated)) {
+            $query->where('user_id', $validated['user_id']);
         }
 
-        $expenses = $query->latest('expense_date')->paginate($request->get('per_page', 20));
+        $expenses = $query->latest('expense_date')->paginate($validated['per_page'] ?? 20);
 
         return response()->json([
             'success' => true,
@@ -348,14 +369,20 @@ class AdminController extends Controller
 
     public function allNotes(Request $request): JsonResponse
     {
+        $validated = $request->validate([
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'search' => ['nullable', 'string', 'max:255'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+
         $query = Note::with('user')->latest('updated_at');
 
-        if ($request->filled('user_id')) {
-            $query->where('user_id', $request->integer('user_id'));
+        if (array_key_exists('user_id', $validated)) {
+            $query->where('user_id', $validated['user_id']);
         }
 
-        if ($request->filled('search')) {
-            $search = $request->string('search');
+        if (!empty($validated['search'])) {
+            $search = $validated['search'];
 
             $query->where(function ($builder) use ($search) {
                 $builder
@@ -366,7 +393,7 @@ class AdminController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $query->paginate($request->get('per_page', 20))
+            'data' => $query->paginate($validated['per_page'] ?? 20)
         ]);
     }
 
@@ -407,25 +434,31 @@ class AdminController extends Controller
 
     public function activityLogs(Request $request): JsonResponse
     {
+        $validated = $request->validate([
+            'action' => ['nullable', 'string', 'max:100'],
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+
         $query = ActivityLog::query()
             ->with(['actor:id,name,email', 'targetUser:id,name,email'])
             ->latest();
 
-        if ($request->filled('action')) {
-            $query->where('action', $request->string('action'));
+        if (!empty($validated['action'])) {
+            $query->where('action', $validated['action']);
         }
 
-        if ($request->filled('user_id')) {
-            $query->where(function ($builder) use ($request) {
+        if (array_key_exists('user_id', $validated)) {
+            $query->where(function ($builder) use ($validated) {
                 $builder
-                    ->where('actor_id', $request->integer('user_id'))
-                    ->orWhere('target_user_id', $request->integer('user_id'));
+                    ->where('actor_id', $validated['user_id'])
+                    ->orWhere('target_user_id', $validated['user_id']);
             });
         }
 
         return response()->json([
             'success' => true,
-            'data' => $query->paginate($request->integer('per_page', 25)),
+            'data' => $query->paginate($validated['per_page'] ?? 25),
         ]);
     }
 
@@ -433,14 +466,14 @@ class AdminController extends Controller
     {
         $validated = $request->validate([
             'user_id' => 'required|integer|exists:users,id',
-            'month' => 'nullable|string',
+            'month' => 'nullable|date_format:Y-m',
         ]);
 
         $user = User::query()
             ->where('role', 'user')
             ->findOrFail($validated['user_id']);
 
-        $month = $request->string('month', now()->format('Y-m'))->toString();
+        $month = $validated['month'] ?? now()->format('Y-m');
         [$year, $monthNumber] = array_pad(explode('-', $month), 2, now()->format('m'));
         $start = now()->setDate((int) $year, (int) $monthNumber, 1)->startOfMonth();
         $end = $start->copy()->endOfMonth();
@@ -497,7 +530,11 @@ class AdminController extends Controller
 
     public function reports(Request $request): JsonResponse
     {
-        $period = $request->get('period', 'monthly');
+        $validated = $request->validate([
+            'period' => ['nullable', 'in:daily,weekly,monthly,yearly'],
+        ]);
+
+        $period = $validated['period'] ?? 'monthly';
         $reports = $this->dashboardService->generateAdminReport($period);
 
         return response()->json([
@@ -510,7 +547,24 @@ class AdminController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => $this->formatSettings($this->getSettingsRecord()),
+            'data' => Cache::remember('site-settings:public', now()->addMinutes(30), fn () => $this->formatSettings($this->getSettingsRecord())),
+        ]);
+    }
+
+    public function publicStats(): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'data' => Cache::remember('site-stats:public', now()->addMinutes(30), function () {
+                $stats = $this->dashboardService->getSystemStats();
+
+                return [
+                    'totalUsers' => (int) ($stats['totalUsers'] ?? 0),
+                    'activeUsers' => (int) ($stats['activeUsers'] ?? 0),
+                    'totalTasks' => (int) ($stats['totalTasks'] ?? 0),
+                    'totalNotes' => (int) ($stats['totalNotes'] ?? 0),
+                ];
+            }),
         ]);
     }
 
@@ -518,7 +572,7 @@ class AdminController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => $this->formatSettings($this->getSettingsRecord()),
+            'data' => Cache::remember('site-settings:admin', now()->addMinutes(30), fn () => $this->formatSettings($this->getSettingsRecord())),
         ]);
     }
 
@@ -578,6 +632,8 @@ class AdminController extends Controller
         }
 
         $settings->update($validated);
+        Cache::forget('site-settings:public');
+        Cache::forget('site-settings:admin');
 
         return response()->json([
             'success' => true,

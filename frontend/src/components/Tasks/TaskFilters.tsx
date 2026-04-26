@@ -11,7 +11,7 @@ import { Button } from '../UI/Button';
 import type { TaskFilters as TaskQueryFilters } from '../../services/taskService';
 
 interface FilterFormState {
-  status: 'all' | 'pending' | 'in_progress' | 'completed';
+  status: 'all' | 'pending' | 'in_progress' | 'completed' | 'overdue';
   priority: 'all' | 'low' | 'medium' | 'high';
   search: string;
 }
@@ -35,7 +35,8 @@ const toFormState = (filters: TaskQueryFilters): FilterFormState => ({
   status:
     filters.status === 'pending' ||
     filters.status === 'in_progress' ||
-    filters.status === 'completed'
+    filters.status === 'completed' ||
+    filters.status === 'overdue'
       ? filters.status
       : 'all',
   priority:
@@ -53,7 +54,7 @@ const toQueryFilters = (filters: FilterFormState): TaskQueryFilters => {
   return {
     status: filters.status === 'all' ? undefined : filters.status,
     priority: filters.priority === 'all' ? undefined : filters.priority,
-    search: search.length >= 3 ? search : undefined,
+    search: search.length > 0 ? search : undefined,
   };
 };
 
@@ -217,6 +218,7 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
                 <option value="pending">Pending</option>
                 <option value="in_progress">In Progress</option>
                 <option value="completed">Completed</option>
+                <option value="overdue">Overdue</option>
               </select>
             </div>
 

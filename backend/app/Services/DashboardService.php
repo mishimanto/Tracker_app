@@ -28,7 +28,11 @@ class DashboardService
 
     public function getUserDashboardStats($userId)
     {
-        $cacheKey = "user:{$userId}:dashboard-stats";
+        $cacheKey = sprintf(
+            'user:%d:dashboard-stats:v%d',
+            $userId,
+            (int) Cache::rememberForever("user:{$userId}:dashboard:version", fn () => 1)
+        );
 
         return Cache::remember($cacheKey, 300, function () use ($userId) {
             $this->recurringExpenseService->generateDueExpensesForUser($userId);
@@ -51,24 +55,31 @@ class DashboardService
 
     public function getRecentActivities($userId, $limit = 10)
     {
-        $tasks = Task::where('user_id', $userId)
-            ->select('id', 'title', 'status', 'created_at', DB::raw("'task' as type"))
-            ->latest()
-            ->limit($limit)
-            ->get();
+        $cacheKey = sprintf(
+            'user:%d:recent-activities:v%d:%d',
+            $userId,
+            (int) Cache::rememberForever("user:{$userId}:dashboard:version", fn () => 1),
+            $limit
+        );
 
-        $expenses = Expense::where('user_id', $userId)
-            ->select('id', 'description as title', 'amount', 'created_at', DB::raw("'expense' as type"))
-            ->latest()
-            ->limit($limit)
-            ->get();
+        return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($userId, $limit) {
+            $tasks = Task::where('user_id', $userId)
+                ->select('id', 'title', 'status', 'created_at', DB::raw("'task' as type"))
+                ->latest()
+                ->limit($limit)
+                ->get();
 
-        $activities = $tasks->concat($expenses)
-            ->sortByDesc('created_at')
-            ->take($limit)
-            ->values();
+            $expenses = Expense::where('user_id', $userId)
+                ->select('id', 'description as title', 'amount', 'created_at', DB::raw("'expense' as type"))
+                ->latest()
+                ->limit($limit)
+                ->get();
 
-        return $activities;
+            return $tasks->concat($expenses)
+                ->sortByDesc('created_at')
+                ->take($limit)
+                ->values();
+        });
     }
 
     public function getSystemStats()

@@ -8,7 +8,6 @@ import {
 import { Menu, Transition } from '@headlessui/react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
 import { useAuthStore } from '../../store/authStore';
 import { siteSettingsService } from '../../services/siteSettingsService';
 import { adminService } from '../../services/adminService';
@@ -32,8 +31,6 @@ export const Header: React.FC<HeaderProps> = ({ setSidebarOpen, variant = 'user'
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchText, setSearchText] = useState('');
-  const seenNotifications = useRef<Set<string>>(new Set());
-  const hasHydratedNotifications = useRef(false);
 
   const { data: settings } = useQuery({
     queryKey: ['site-settings'],
@@ -99,29 +96,6 @@ export const Header: React.FC<HeaderProps> = ({ setSidebarOpen, variant = 'user'
   const profilePhotoUrl = getProfileImageUrl(user?.profile_photo_path);
   const brandName = settings?.site_name?.trim() || 'Task & Expense';
 
-  useEffect(() => {
-    if (variant !== 'user') {
-      return;
-    }
-
-    if (!hasHydratedNotifications.current) {
-      notifications.forEach((item) => {
-        seenNotifications.current.add(item.id);
-      });
-      hasHydratedNotifications.current = true;
-      return;
-    }
-
-    for (const item of notifications) {
-      if (!item.read_at && !seenNotifications.current.has(item.id)) {
-        seenNotifications.current.add(item.id);
-        toast(item.data?.title || 'New notification', {
-          icon: item.data?.kind === 'budget_exceeded' ? '!' : item.data?.kind === 'feedback_reply' ? '@' : '*',
-        });
-      }
-    }
-  }, [notifications, variant]);
-
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -152,9 +126,6 @@ export const Header: React.FC<HeaderProps> = ({ setSidebarOpen, variant = 'user'
       </button>
 
       <div className="flex flex-1 items-center gap-4 self-stretch lg:gap-x-6">
-        <div className="flex items-center gap-3 lg:hidden">
-          <span className="text-lg font-bold text-slate-900">{brandName}</span>
-        </div>
 
         <form onSubmit={handleSearch} className="hidden max-w-xl flex-1 lg:block">
           <div className="relative">
@@ -169,6 +140,13 @@ export const Header: React.FC<HeaderProps> = ({ setSidebarOpen, variant = 'user'
         </form>
 
         <div className="ml-auto flex items-center gap-2 sm:gap-4">
+          <Link
+            to="/"
+            className="hidden items-center px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-sky-300 hover:text-sky-700 md:inline-flex"
+          >
+            Visit Site
+          </Link>
+
           {variant === 'admin' && (
             <p className="hidden truncate text-sm font-semibold text-blue-600/80 xl:block">
               Control Center
@@ -178,18 +156,18 @@ export const Header: React.FC<HeaderProps> = ({ setSidebarOpen, variant = 'user'
           <button
             type="button"
             onClick={() => navigate(variant === 'admin' ? '/admin/calendar' : '/calendar')}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-sky-300 hover:text-sky-700"
+            className="inline-flex h-10 w-10 items-center justify-center text-slate-600 transition hover:border-sky-300 hover:text-sky-700"
             title="Calendar view"
           >
-            <CalendarDaysIcon className="h-5 w-5" />
+            <CalendarDaysIcon className="h-6 w-6" />
           </button>
 
           <Menu as="div" className="relative">
-            <Menu.Button className="relative rounded-full border border-slate-200 bg-white p-2 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900">
+            <Menu.Button className="relative p-2 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900">
               <span className="sr-only">Open notifications</span>
               <BellIcon className="h-6 w-6" />
               {unreadCount > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[11px] font-bold text-white">
+                <span className="absolute -right-0.5 -top-0.5 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 text-[11px] font-bold text-white">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
@@ -304,7 +282,7 @@ export const Header: React.FC<HeaderProps> = ({ setSidebarOpen, variant = 'user'
               leaveFrom="transform opacity-100 scale-100"
               leaveTo="transform opacity-0 scale-95"
             >
-              <Menu.Items className="absolute right-0 z-10 mt-2.5 w-48 origin-top-right rounded-2xl bg-white py-2 shadow-lg ring-1 ring-slate-900/5 focus:outline-none">
+              <Menu.Items className="absolute right-0 z-10 mt-2.5 w-48 origin-top-right rounded-md bg-white py-2 shadow-lg ring-1 ring-slate-900/5 focus:outline-none">
                 <Menu.Item>
                   {({ active }) => (
                     <button
@@ -332,7 +310,7 @@ export const Header: React.FC<HeaderProps> = ({ setSidebarOpen, variant = 'user'
                         onClick={() => navigate('/admin/settings')}
                         className={`${active ? 'bg-slate-50' : ''} block w-full px-4 py-2 text-left text-sm text-slate-900`}
                       >
-                        Site Settings
+                        Settings
                       </button>
                     )}
                   </Menu.Item>

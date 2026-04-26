@@ -3,8 +3,8 @@ import { apiService } from './api';
 import { Task, TaskStats } from '../types';
 
 export interface TaskFilters {
-  status?: string;
-  priority?: string;
+  status?: 'pending' | 'in_progress' | 'completed' | 'overdue';
+  priority?: 'low' | 'medium' | 'high';
   date?: string;
   search?: string;
 }
@@ -18,12 +18,21 @@ const normalizeDate = (value?: string | null): string => {
     return value;
   }
 
+  const isoDateMatch = value.match(/^(\d{4}-\d{2}-\d{2})[T\s]/);
+  if (isoDateMatch) {
+    return isoDateMatch[1];
+  }
+
   const parsedDate = new Date(value);
   if (Number.isNaN(parsedDate.getTime())) {
     return value;
   }
 
-  return parsedDate.toISOString().split('T')[0];
+  const year = parsedDate.getFullYear();
+  const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
+  const day = String(parsedDate.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
 };
 
 const normalizeTime = (value?: string | null): string | null => {

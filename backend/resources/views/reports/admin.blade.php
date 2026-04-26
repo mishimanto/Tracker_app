@@ -7,8 +7,6 @@
         body { font-family: DejaVu Sans, sans-serif; color: #0f172a; font-size: 12px; }
         .header { border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 20px; }
         .muted { color: #475569; }
-        .card { width: 31%; display: inline-block; vertical-align: top; margin: 0 1% 12px 1%; border: 1px solid #cbd5e1; padding: 12px; box-sizing: border-box; }
-        .value { font-size: 20px; font-weight: bold; margin-top: 8px; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; }
         th { background: #e2e8f0; }
@@ -18,16 +16,6 @@
     <div class="header">
         <h1>{{ $title }}</h1>
         <p class="muted">Period: {{ $period }} | Generated: {{ $generatedAt->format('d M Y h:i A') }}</p>
-    </div>
-
-    <div>
-        <div class="card"><div>Total Users</div><div class="value">{{ $totalUsers }}</div></div>
-        <div class="card"><div>Active Users</div><div class="value">{{ $activeUsers }}</div></div>
-        <div class="card"><div>Inactive/Banned</div><div class="value">{{ $inactiveUsers }}</div></div>
-        <div class="card"><div>Total Tasks</div><div class="value">{{ $totalTasks }}</div></div>
-        <div class="card"><div>Completed Tasks</div><div class="value">{{ $completedTasks }}</div></div>
-        <div class="card"><div>Total Expenses</div><div class="value">BDT {{ number_format($totalExpenses, 2) }}</div></div>
-        <div class="card"><div>Total Notes</div><div class="value">{{ $noteCount }}</div></div>
     </div>
 
     <h3>Recent Expenses</h3>

@@ -10,6 +10,7 @@ import {
 import { CheckCircleIcon as CheckCircleSolid } from '@heroicons/react/24/solid';
 import { Task } from '../../types';
 import { Modal } from '../UI/Modal';
+import { isTaskOverdue } from '../../utils/taskDeadline';
 
 interface TaskCardProps {
   task: Task;
@@ -31,7 +32,19 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const isListView = viewMode === 'list';
 
-  const dueDate = task.due_date ? new Date(task.due_date) : null;
+  const dueDate = useMemo(() => {
+    if (!task.due_date) {
+      return null;
+    }
+
+    const [year, month, day] = task.due_date.split('-').map(Number);
+    if (!year || !month || !day) {
+      return null;
+    }
+
+    return new Date(year, month - 1, day);
+  }, [task.due_date]);
+
   const formattedDueDate =
     dueDate && !Number.isNaN(dueDate.getTime())
       ? format(dueDate, 'MMM dd, yyyy')
@@ -42,6 +55,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({
     timeDate && !Number.isNaN(timeDate.getTime())
       ? format(timeDate, 'hh:mm a')
       : null;
+
+  const isOverdue = useMemo(() => isTaskOverdue(task), [task]);
 
   const details = task.description?.trim() || '';
   const previewDetails = useMemo(() => {
@@ -67,7 +82,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   return (
     <>
       <div
-        className={`group overflow-hidden border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg ${
+        className={`group overflow-hidden border shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg ${
+          isOverdue ? 'border-rose-200 bg-rose-50/80' : 'border-slate-200 bg-white'
+        } ${
           isListView ? 'p-4 sm:p-5' : 'p-5'
         }`}
       >
@@ -93,6 +110,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                 </button>
 
                 <div className="min-w-0 flex-1">
+                  <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                    Task #{itemNumber}
+                  </p>
                   <h3
                     className={`text-base font-semibold leading-6 text-slate-900 sm:text-lg ${
                       task.status === 'completed' ? 'line-through text-slate-400' : ''
@@ -104,7 +124,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
               </div>
             </div>
 
-            <div className="flex shrink-0 items-center gap-1  bg-slate-50 p-1">
+            <div className={`flex shrink-0 items-center gap-1 p-1 ${isOverdue ? 'bg-rose-100/80' : 'bg-slate-50'}`}>
               <button
                 onClick={() => onEdit(task)}
                 className=" p-2 text-slate-400 transition hover:bg-white hover:text-blue-500"
@@ -120,7 +140,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             </div>
           </div>
 
-          <div className=" bg-slate-50 py-3">
+          <div className={`${isOverdue ? 'bg-rose-100/70' : 'bg-slate-50'} py-3`}>
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
               Details:
             </div>
@@ -140,9 +160,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({
               {task.priority}
             </span>
             <span
-              className={` px-3 py-1 text-xs font-semibold ${statusColors[task.status]}`}
+              className={` px-3 py-1 text-xs font-semibold ${isOverdue ? 'bg-rose-100 text-rose-700' : statusColors[task.status]}`}
             >
-              {task.status.replace('_', ' ')}
+              {isOverdue ? 'overdue' : task.status.replace('_', ' ')}
             </span>
           </div>
 
@@ -151,17 +171,17 @@ export const TaskCard: React.FC<TaskCardProps> = ({
               isListView ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'
             }`}
           >
-            <div className=" bg-slate-50 py-1">
+            <div className={`${isOverdue ? 'bg-rose-100/70' : 'bg-slate-50'} py-1`}>
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
                 <CalendarDaysIcon className="h-4 w-4" />
-                Due Date: <span className="text-sm font-medium text-slate-700">{formattedDueDate}</span>
+                Due Date: <span className={`text-sm font-medium ${isOverdue ? 'text-rose-700' : 'text-slate-700'}`}>{formattedDueDate}</span>
               </div>
             </div>
 
-            <div className=" bg-slate-50 py-1">
+            <div className={`${isOverdue ? 'bg-rose-100/70' : 'bg-slate-50'} py-1`}>
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
                 <ClockIcon className="h-4 w-4" />
-                Due Time: <span className=" text-sm font-medium text-slate-700">{formattedDueTime || 'Not set'}</span>
+                Due Time: <span className={` text-sm font-medium ${isOverdue ? 'text-rose-700' : 'text-slate-700'}`}>{formattedDueTime || 'Not set'}</span>
               </div>
               
             </div>
@@ -183,13 +203,13 @@ export const TaskCard: React.FC<TaskCardProps> = ({
               {task.priority}
             </span>
             <span
-              className={` px-3 py-1 text-xs font-semibold ${statusColors[task.status]}`}
+              className={` px-3 py-1 text-xs font-semibold ${isOverdue ? 'bg-rose-100 text-rose-700' : statusColors[task.status]}`}
             >
-              {task.status.replace('_', ' ')}
+              {isOverdue ? 'overdue' : task.status.replace('_', ' ')}
             </span>
           </div>
 
-          <div className="bg-slate-50 px-4 py-4">
+          <div className={`${isOverdue ? 'bg-rose-100/70' : 'bg-slate-50'} px-4 py-4`}>
             <p className="text-sm leading-7 text-slate-700">
               {details || 'No details added for this task yet.'}
             </p>

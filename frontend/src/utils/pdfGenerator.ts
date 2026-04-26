@@ -150,68 +150,6 @@ export const generateReportPDF = async (data: ReportData) => {
         letter-spacing: -0.3px;
       }
       
-      /* KPI Cards */
-      .kpi-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 20px;
-      }
-      
-      .kpi-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 24px 20px;
-        transition: all 0.2s;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-      }
-      
-      .kpi-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 16px;
-      }
-      
-      .kpi-label {
-        font-size: 13px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-        color: #64748b;
-      }
-      
-      .kpi-icon {
-        width: 28px;
-        height: 28px;
-        background: #f8fafc;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 14px;
-      }
-      
-      .kpi-value {
-        font-size: 32px;
-        font-weight: 700;
-        color: #0f172a;
-        margin-bottom: 4px;
-        letter-spacing: -0.5px;
-      }
-      
-      .kpi-trend {
-        font-size: 12px;
-        color: #10b981;
-        font-weight: 500;
-      }
-      
-      .kpi-subtext {
-        font-size: 12px;
-        color: #94a3b8;
-        margin-top: 8px;
-      }
-      
       /* Categories Table */
       .categories-container {
         background: #ffffff;
@@ -394,7 +332,7 @@ export const generateReportPDF = async (data: ReportData) => {
       
       <!-- Body -->
       <div class="report-body">
-        <!-- KPIs -->
+        ${false ? `
         <div class="section">
           <div class="section-header">
             <div class="section-icon">📊</div>
@@ -443,6 +381,7 @@ export const generateReportPDF = async (data: ReportData) => {
           </div>
         </div>
         
+        ` : ''}
         <!-- Categories -->
         ${
           data.categories && data.categories.length > 0

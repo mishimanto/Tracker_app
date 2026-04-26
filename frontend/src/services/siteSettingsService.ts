@@ -17,6 +17,27 @@ class SiteSettingsService {
       return null;
     }
   }
+
+  async getPublicStats(): Promise<{
+    totalUsers: number;
+    activeUsers: number;
+    totalTasks: number;
+    totalNotes: number;
+  } | null> {
+    try {
+      const response = await apiService.get<LaravelApiResponse<{
+        totalUsers: number;
+        activeUsers: number;
+        totalTasks: number;
+        totalNotes: number;
+      }>>('/public-stats');
+
+      return response?.data ?? null;
+    } catch (error) {
+      console.error('Failed to fetch public stats:', error);
+      return null;
+    }
+  }
 }
 
 export const siteSettingsService = new SiteSettingsService();

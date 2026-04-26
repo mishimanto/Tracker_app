@@ -1,11 +1,9 @@
 // frontend/src/pages/user/Dashboard.tsx
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { UserLayout } from '../../components/Layout/UserLayout';
 import { StatsCard } from '../../components/Dashboard/StatsCard';
-import { RecentActivity } from '../../components/Dashboard/RecentActivity';
-import { ExpenseChart } from '../../components/Expenses/ExpenseChart';
 import { PageLoader } from '../../components/UI/PageLoader';
 import { taskService } from '../../services/taskService';
 import { expenseService } from '../../services/expenseService';
@@ -19,6 +17,22 @@ import {
   ListBulletIcon,
   PlusIcon,
 } from '@heroicons/react/24/outline';
+
+const ExpenseChart = lazy(async () => {
+  const module = await import('../../components/Expenses/ExpenseChart');
+  return { default: module.ExpenseChart };
+});
+
+const RecentActivity = lazy(async () => {
+  const module = await import('../../components/Dashboard/RecentActivity');
+  return { default: module.RecentActivity };
+});
+
+const SectionFallback: React.FC<{ message: string }> = ({ message }) => (
+  <div className="flex min-h-48 items-center justify-center border border-dashed border-slate-200 bg-slate-50/80">
+    <PageLoader message={message} />
+  </div>
+);
 
 export const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -68,16 +82,20 @@ export const UserDashboard: React.FC = () => {
     const dailyAverage = typeof expenseStatsData.daily_average === 'string'
       ? parseFloat(expenseStatsData.daily_average)
       : Number(expenseStatsData.daily_average) || 0;
+
+    const dailyBreakdown = Array.isArray(expenseStatsData.daily_breakdown)
+      ? expenseStatsData.daily_breakdown
+      : [];
     
     return {
       total,
       daily_average: dailyAverage,
-      daily_breakdown: (expenseStatsData.daily_breakdown || []).map((item: any) => ({
+      daily_breakdown: dailyBreakdown.map((item: any) => ({
         name: new Date(item.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
         amount: Number(item.total) || 0,
       })),
-      by_category: expenseStatsData.by_category || [],
-      by_payment_method: expenseStatsData.by_payment_method || [],
+      by_category: Array.isArray(expenseStatsData.by_category) ? expenseStatsData.by_category : [],
+      by_payment_method: Array.isArray(expenseStatsData.by_payment_method) ? expenseStatsData.by_payment_method : [],
     };
   }, [expenseStatsData]);
 
@@ -223,7 +241,9 @@ export const UserDashboard: React.FC = () => {
                 Your spending pattern this month
               </p>
             </div>
-            <ExpenseChart data={expenseStats.daily_breakdown} type="bar" />
+            <Suspense fallback={<SectionFallback message="Loading chart..." />}>
+              <ExpenseChart data={expenseStats.daily_breakdown} type="bar" />
+            </Suspense>
           </div>
         </section>
 
@@ -242,10 +262,12 @@ export const UserDashboard: React.FC = () => {
               <ArrowRightIcon className="h-4 w-4" />
             </button>
           </div>
-          <RecentActivity
-            tasks={recentTasks.slice(0, 5)}
-            expenses={recentExpenses.slice(0, 5)}
-          />
+          <Suspense fallback={<SectionFallback message="Loading activity..." />}>
+            <RecentActivity
+              tasks={recentTasks.slice(0, 5)}
+              expenses={recentExpenses.slice(0, 5)}
+            />
+          </Suspense>
         </section>
       </div>
     </UserLayout>

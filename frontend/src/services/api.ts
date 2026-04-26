@@ -1,8 +1,8 @@
 // frontend/src/services/api.ts
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://api.mytracker.shimzo.online/api';
-const BACKEND_URL = 'https://api.mytracker.shimzo.online';
+const API_URL = import.meta.env.VITE_API_URL || 'http://tracker.test/api';
+const BACKEND_URL = 'http://tracker.test';
 
 class ApiService {
   private api: AxiosInstance;

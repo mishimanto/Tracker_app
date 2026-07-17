@@ -4,10 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node init && vite",
     "seo:generate": "node ./scripts/generate-seo-files.mjs",
     "prerender": "node ./scripts/prerender.mjs",
-    "build": "npm run seo:generate && tsc -b && vite build && npm run prerender",
+    "build": "node init && npm run seo:generate && tsc -b && vite build && npm run prerender",
     "lint": "eslint .",
     "preview": "vite preview"
   },
